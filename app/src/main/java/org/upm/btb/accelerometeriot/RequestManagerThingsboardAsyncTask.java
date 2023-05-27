@@ -37,9 +37,16 @@ public class RequestManagerThingsboardAsyncTask extends AsyncTask<JSONObject, Vo
 
             try {
 
+                //URL url = new URL("https://thingsboard.cloud/api/v1/nUw81FzSm8uAbzbok8xx/telemetry");
+                //connection = (HttpsURLConnection) url.openConnection();
 
-                URL url = new URL("https://demo.thingsboard.io/api/v1/..pontutokenaqui.../telemetry");
+
+                URL url = new URL("https://demo.thingsboard.io/api/v1/y8JEhPdCTeeQ0ASgiv4t/telemetry");
                 connection = (HttpsURLConnection) url.openConnection();
+
+
+                //URL url = new URL("http://iot.etsisi.upm.es:8080/api/v1/jpDpp5e5MPkqnbRXj7CL/telemetry");
+                //connection = (HttpURLConnection) url.openConnection();
 
 
                 Log.i(CLASSNAME, "Lunch command on url "+url.toString());
