@@ -1,3 +1,5 @@
-# Accelerometer IoT
-Android app showing sensor data from mobile accelrometer. 
-Data is uploaded into Thingsboard platform
+# AccelerometerIoT
+SensorManager usage example. Android app showing sensor data for mobile accelerometer and
+uploading it to Thingsboard IoT platform. 
+
+Version PAS 2024 for Android Java and Kotlin DSL build.gradle.kts

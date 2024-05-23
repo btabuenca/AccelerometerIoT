@@ -101,6 +101,11 @@ public class MainActivity extends Activity implements SensorEventListener {
 	public void onSensorChanged(SensorEvent event) {
 
 		if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+
+			//
+			// Acceleromter
+			//
+
 			// clean current values
 			displayCleanValues();
 
@@ -110,7 +115,6 @@ public class MainActivity extends Activity implements SensorEventListener {
 			float x = event.values[0];
 			float y = event.values[1];
 			float z = event.values[2];
-
 
 			// get the change of the x,y,z values of the accelerometer
 			deltaX = Math.abs(lastX - x);
@@ -132,8 +136,10 @@ public class MainActivity extends Activity implements SensorEventListener {
 			pushIoTPlaform(deltaX, deltaY, deltaZ);
 
 
+			//
+			// Calculate inclination
+			//
 
-			// calculate inclination
 			double inclination = Math.toDegrees(Math.atan2(y, Math.sqrt(x * x + z * z)));
 			currentIncl.setText(inclination + "º");
 
