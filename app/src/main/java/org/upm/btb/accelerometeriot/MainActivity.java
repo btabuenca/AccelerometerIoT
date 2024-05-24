@@ -9,8 +9,6 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 
 import org.json.JSONException;
@@ -133,15 +131,19 @@ public class MainActivity extends Activity implements SensorEventListener {
 
 
 			// push values into IoT platform
-			pushIoTPlaform(deltaX, deltaY, deltaZ);
+			pushAcceleromIoTPlaform(deltaX, deltaY, deltaZ);
 
 
 			//
 			// Calculate inclination
 			//
 
-			double inclination = Math.toDegrees(Math.atan2(y, Math.sqrt(x * x + z * z)));
-			currentIncl.setText(inclination + "º");
+			//double inclination = Math.toDegrees(Math.atan2(y, Math.sqrt(x * x + z * z)));
+			double inclinationX = Math.toDegrees(Math.atan2(x, Math.sqrt(y * y + z * z)));
+			double inclinationY = Math.toDegrees(Math.atan2(y, Math.sqrt(x * x + z * z)));
+
+			currentIncl.setText(String.format(" X: %.2f°  Y: %.2f°" , inclinationX, inclinationY));
+			//currentIncl.setText(inclination + "º");
 
 		}
 
@@ -178,7 +180,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 	 * @param fy
 	 * @param fz
 	 */
-	public void pushIoTPlaform(float fx, float fy, float fz){
+	public void pushAcceleromIoTPlaform(float fx, float fy, float fz){
 
 		if ((fx > vibrateThreshold) || (fz > vibrateThreshold) || (fz > vibrateThreshold)) {
 

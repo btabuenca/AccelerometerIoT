@@ -41,7 +41,12 @@ public class RequestManagerThingsboardAsyncTask extends AsyncTask<JSONObject, Vo
                 //connection = (HttpsURLConnection) url.openConnection();
 
 
-                URL url = new URL("https://demo.thingsboard.io/api/v1/y8JEhPdCTeeQ0ASgiv4t/telemetry");
+                // upm account
+                //URL url = new URL("https://demo.thingsboard.io/api/v1/y8JEhPdCTeeQ0ASgiv4t/telemetry");
+                //connection = (HttpsURLConnection) url.openConnection();
+
+                // gmail account
+                URL url = new URL("https://demo.thingsboard.io/api/v1/iOQ4v4hYh2qHNrpH3fKR/telemetry");
                 connection = (HttpsURLConnection) url.openConnection();
 
 
