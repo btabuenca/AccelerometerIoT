@@ -197,7 +197,8 @@ public class MainActivity extends Activity implements SensorEventListener {
 
 			Log.e(TAG, "Pushing telemetry ["+jsonObject.toString()+"]");
 
-			new RequestManagerThingsboardAsyncTask().execute(jsonObject);
+			RequestManagerThingsboardAsyncTask task = new RequestManagerThingsboardAsyncTask(this);
+			task.execute(jsonObject);
 		}
 	}
 
