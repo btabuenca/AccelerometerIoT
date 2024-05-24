@@ -1,3 +1,6 @@
+# Ignore the configuration file with sensitive data
+app/src/main/assets/config.properties
+
 *.iml
 .gradle
 /local.properties
