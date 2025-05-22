@@ -7,13 +7,15 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Vibrator;
 import android.util.Log;
 import android.widget.TextView;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends Activity implements SensorEventListener {
 
@@ -23,137 +25,113 @@ public class MainActivity extends Activity implements SensorEventListener {
 	private Sensor accelerometer;
 
 	private float lastX, lastY, lastZ;
-
-	private float deltaX = 0;
-	private float deltaY = 0;
-	private float deltaZ = 0;
+	private float deltaX = 0, deltaY = 0, deltaZ = 0;
 
 	private float vibrateThreshold = 0;
 	public Vibrator v;
-
 	private TextView currentX, currentY, currentZ, currentIncl;
 
+	private ExecutorService executorService = Executors.newSingleThreadExecutor();
+	private Handler mainHandler = new Handler(Looper.getMainLooper());
+
+	private String telemetryUrl;
+	private ConfigReader configReader;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
+		// Inicializamos las vistas y sensores
 		initializeActuators();
 		initializeSensors();
 
+		// Cargar la URL desde config.properties
+		configReader = new ConfigReader(this);
+		telemetryUrl = configReader.getProperty("url");
+		if (telemetryUrl == null) {
+			Log.e(TAG, "URL de telemetría no encontrada en config.properties.");
+		}
 	}
 
-	/**
-	 *  Initialize actuators
-	 */
 	public void initializeActuators() {
-		currentX = (TextView) findViewById(R.id.currentX);
-		currentY = (TextView) findViewById(R.id.currentY);
-		currentZ = (TextView) findViewById(R.id.currentZ);
-		currentIncl = (TextView) findViewById(R.id.currentIncl);
+		currentX = findViewById(R.id.currentX);
+		currentY = findViewById(R.id.currentY);
+		currentZ = findViewById(R.id.currentZ);
+		currentIncl = findViewById(R.id.currentIncl);
 
-		// Initialize vibration
 		v = (Vibrator) this.getSystemService(Context.VIBRATOR_SERVICE);
-
 	}
 
-	/**
-	 * Initialize sensors
-	 */
 	public void initializeSensors() {
-
 		sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
 		if (sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null) {
-			Log.e(TAG, "Success! we have an accelerometer");
-
 			accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 			sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-			vibrateThreshold = accelerometer.getMaximumRange() / 2;
+
+			configReader = new ConfigReader(this);
+			String thresholdStr = configReader.getProperty("threshold");
+			if (thresholdStr != null) {
+				vibrateThreshold = Float.parseFloat(thresholdStr);
+			} else {
+				vibrateThreshold = 1.0f;  // valor por defecto
+			}
 
 		} else {
-			// failed, we dont have an accelerometer!
 			Log.e(TAG, "Failed. Unfortunately we do not have an accelerometer");
 		}
-
 	}
 
+	@Override
 	protected void onResume() {
 		super.onResume();
 		sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
 	}
 
-	//onPause() unregister the accelerometer to stop listening to events
+	@Override
 	protected void onPause() {
 		super.onPause();
 		sensorManager.unregisterListener(this);
 	}
 
 	@Override
-	public void onAccuracyChanged(Sensor sensor, int accuracy) {
-		
-	}
+	public void onAccuracyChanged(Sensor sensor, int accuracy) { }
 
 	@Override
 	public void onSensorChanged(SensorEvent event) {
-
 		if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-
-			//
-			// Acceleromter
-			//
-
-			// clean current values
 			displayCleanValues();
-
-			// display the current x,y,z accelerometer values
 			displayCurrentValues();
 
 			float x = event.values[0];
 			float y = event.values[1];
 			float z = event.values[2];
 
-			// get the change of the x,y,z values of the accelerometer
 			deltaX = Math.abs(lastX - x);
 			deltaY = Math.abs(lastY - y);
 			deltaZ = Math.abs(lastZ - z);
 
-			// if variation is below 2, it is just plain noise. Discard it!
 			if (deltaX < 2) deltaX = 0;
 			if (deltaY < 2) deltaY = 0;
 			if (deltaZ < 2) deltaZ = 0;
 
-			// set the last know values of x,y,z
 			lastX = x;
 			lastY = y;
 			lastZ = z;
 
-
-			// push values into IoT platform
+			// Enviar telemetría
+			// Log.d(TAG, "New telemetry [" + deltaX + "][" + deltaY + "][" + deltaZ + "]");
 			pushAcceleromIoTPlaform(deltaX, deltaY, deltaZ);
 
-
-			//
-			// Calculate inclination
-			//
-
-			//double inclination = Math.toDegrees(Math.atan2(y, Math.sqrt(x * x + z * z)));
 			double inclinationX = Math.toDegrees(Math.atan2(x, Math.sqrt(y * y + z * z)));
 			double inclinationY = Math.toDegrees(Math.atan2(y, Math.sqrt(x * x + z * z)));
-
-			currentIncl.setText(String.format(" X: %.2f°  Y: %.2f°" , inclinationX, inclinationY));
-			//currentIncl.setText(inclination + "º");
-
+			currentIncl.setText(String.format(" X: %.2f°  Y: %.2f°", inclinationX, inclinationY));
 		}
 
-
 		vibrate();
-
 	}
 
-	// if the change in the accelerometer value is big enough, then vibrate!
-	// our threshold is MaxValue/2
 	public void vibrate() {
 		if ((deltaX > vibrateThreshold) || (deltaY > vibrateThreshold) || (deltaZ > vibrateThreshold)) {
 			v.vibrate(50);
@@ -166,27 +144,15 @@ public class MainActivity extends Activity implements SensorEventListener {
 		currentZ.setText("0.0");
 	}
 
-	// display the current x,y,z accelerometer values
 	public void displayCurrentValues() {
 		currentX.setText(Float.toString(deltaX));
 		currentY.setText(Float.toString(deltaY));
 		currentZ.setText(Float.toString(deltaZ));
 	}
 
-
-	/**
-	 * Push JSON notification via http to IoT platform: Thingsboard
-	 * @param fx
-	 * @param fy
-	 * @param fz
-	 */
-	public void pushAcceleromIoTPlaform(float fx, float fy, float fz){
-
-		if ((fx > vibrateThreshold) || (fz > vibrateThreshold) || (fz > vibrateThreshold)) {
-
-			// Push thingsboard telemetry
+	public void pushAcceleromIoTPlaform(float fx, float fy, float fz) {
+		if ((fx > vibrateThreshold) || (fz > vibrateThreshold)) {
 			JSONObject jsonObject = new JSONObject();
-			//jsonObject.put("amplitude", mSensor.getAmplitude());
 			try {
 				jsonObject.put("x", fx);
 				jsonObject.put("y", fy);
@@ -195,11 +161,16 @@ public class MainActivity extends Activity implements SensorEventListener {
 				e.printStackTrace();
 			}
 
-			Log.e(TAG, "Pushing telemetry ["+jsonObject.toString()+"]");
+			Log.e(TAG, "Pushing telemetry [" + jsonObject.toString() + "]");
 
-			RequestManagerThingsboardAsyncTask task = new RequestManagerThingsboardAsyncTask(this);
-			task.execute(jsonObject);
+			// Ejecutar la solicitud en el hilo de fondo
+			executorService.submit(() -> {
+				String response = NetworkUtils.sendTelemetryData(jsonObject, telemetryUrl);
+				// Si necesitas actualizar la UI después de recibir la respuesta:
+				mainHandler.post(() -> {
+					Log.d(TAG, "Response from server: " + response);
+				});
+			});
 		}
 	}
-
 }
