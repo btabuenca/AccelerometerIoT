@@ -35,7 +35,6 @@ public class MainActivity extends Activity implements SensorEventListener {
 	private Handler mainHandler = new Handler(Looper.getMainLooper());
 
 	private String telemetryUrl;
-	private ConfigReader configReader;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -47,7 +46,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 		initializeSensors();
 
 		// Cargar la URL desde config.properties
-		configReader = new ConfigReader(this);
+		ConfigReader configReader = new ConfigReader(this);
 		telemetryUrl = configReader.getProperty("url");
 		if (telemetryUrl == null) {
 			Log.e(TAG, "URL de telemetría no encontrada en config.properties.");
@@ -69,15 +68,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 		if (sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null) {
 			accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 			sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-
-			configReader = new ConfigReader(this);
-			String thresholdStr = configReader.getProperty("threshold");
-			if (thresholdStr != null) {
-				vibrateThreshold = Float.parseFloat(thresholdStr);
-			} else {
-				vibrateThreshold = 1.0f;  // valor por defecto
-			}
-
+			vibrateThreshold = accelerometer.getMaximumRange() / 2;
 		} else {
 			Log.e(TAG, "Failed. Unfortunately we do not have an accelerometer");
 		}
@@ -121,7 +112,6 @@ public class MainActivity extends Activity implements SensorEventListener {
 			lastZ = z;
 
 			// Enviar telemetría
-			// Log.d(TAG, "New telemetry [" + deltaX + "][" + deltaY + "][" + deltaZ + "]");
 			pushAcceleromIoTPlaform(deltaX, deltaY, deltaZ);
 
 			double inclinationX = Math.toDegrees(Math.atan2(x, Math.sqrt(y * y + z * z)));

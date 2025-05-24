@@ -20,33 +20,22 @@ public class NetworkUtils {
         RequestBody body = RequestBody.create(
                 MediaType.get("application/json; charset=utf-8"), json);
 
-        // Imprimir la URL y los parámetros
-        Log.d(TAG, "URL: " + targetUrl);
-        Log.d(TAG, "Parametros: " + json);  // Aquí estamos imprimiendo el JSON como string
-
         // Crear la solicitud HTTP POST
         Request request = new Request.Builder()
                 .url(targetUrl)
                 .post(body)
                 .build();
 
-        // Imprimir que la solicitud está siendo enviada
-        Log.d(TAG, "Enviando solicitud POST...");
-
         try (Response response = client.newCall(request).execute()) {
             // Verificar si la solicitud fue exitosa
             if (response.isSuccessful()) {
-                // Imprimir que la solicitud se envió correctamente
-                Log.d(TAG, "Solicitud POST enviada correctamente. Código de respuesta: " + response.code());
                 return response.body().string();  // Devolver la respuesta del servidor
             } else {
-                // Imprimir que la solicitud falló
-                Log.e(TAG, "Solicitud POST fallida con código: " + response.code());
+                Log.e(TAG, "HTTP request failed with code: " + response.code());
                 return "Error: " + response.code();
             }
         } catch (IOException e) {
-            // Imprimir el error en caso de que ocurra una excepción
-            Log.e(TAG, "Error durante la solicitud HTTP POST", e);
+            Log.e(TAG, "Error during HTTP POST request", e);
             return "Request failed: " + e.getMessage();
         }
     }
